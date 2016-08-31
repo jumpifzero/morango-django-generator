@@ -125,6 +125,5 @@ class DjangoGenerator():
 							(self.admin_email))
 		print(self.text['generated_proj'] % self.prj_name)
 		self.set_admin_password()
-		os.chdir(self.prj_name)
-		
+		os.chdir(self.prj_name)	
 		print(self.text['generated_proj'] % self.prj_name)
