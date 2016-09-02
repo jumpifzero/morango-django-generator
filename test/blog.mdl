@@ -1,0 +1,17 @@
+Post{
+	title: String!;
+	author: Author!;
+	body: Text!;
+	publishDate: Date;
+	publish: Boolean;
+	tags: *Tag!;
+}
+
+Tag{
+	name: String!;
+}
+
+Author{
+	name: String;
+	email: Email;
+}

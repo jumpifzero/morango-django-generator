@@ -61,14 +61,22 @@ class DjangoGenerator():
 											self.prj_name)
 	#
 	#
-	def generate_models(self):
-		# TODO: join paths better
-		fname = self.get_app_path() + "/models.py" 
+	def _render_models(self):
+		"""
+		Given the current models definition,
+		returns a rendered string of models.py
+		"""
 		context = {
 			'models': self.models
 		}
+		return self.generator.render('models.template.py', context)
+	#
+	#
+	def generate_models(self):
+		# TODO: join paths better
+		fname = self.get_app_path() + "/models.py" 
+		code = self._render_models()
 		with open(fname, 'w') as f:
-			code = self.generator.render('models.template.py', context)
 			f.write(code)
 	
 	#
