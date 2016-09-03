@@ -1,5 +1,4 @@
-from django.db import models
-
+{# The following macro generates the django field definition #}
 {% macro field(f) -%}
 {%- if f.type == 'Boolean' -%}
 models.BooleanField()
@@ -16,17 +15,23 @@ models.ImageField()
 {%- elif f.type == 'Audio' %}
 {%- elif f.type == 'Date' %}
 models.DateField()
+{%- elif f.type == 'Email' %}
+models.EmailField()
 {%- elif f.relationship %}
-models.CharField(max_length=30)
+models.ManyToManyField('{{f.type}}', blank={{f.multiplicity.min==0}})
+{%- else %}
+Bug in the generator. Unsupported field type!
 {%- endif %}
 {%- endmacro %}
-
+from django.db import models
 
 
 {% for m in models %}
 class {{m.name}}(models.Model):
 	{% for f in m.fields %}
-  {{f.name}} = {{field(f)}}
+	{{f.name}} = {{field(f)}}
 	{% endfor %}
 
 {% endfor %}
+
+
