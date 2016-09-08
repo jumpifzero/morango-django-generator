@@ -12,8 +12,34 @@ import string
 from jinja2 import Environment, FileSystemLoader
 from subprocess import Popen, PIPE, STDOUT
 
+
+def _render_field(f):
+	"""
+	For fields which are not basic types, 
+	Receives a field and injects a 'rendered' property containing the
+	django definition of the same field.
+	"""
+	if f.relationship:
+		if f.multiplicity.max == 1:
+			f.rendered = ( "models.ForeignKey('%s', blank=%s)" % 
+				( f.type, f.multiplicity.min==0 ) )
+		else:
+			f.rendered = ( "models.ManyToManyField('%s', blank=%s)" % 
+				( f.type, f.multiplicity.min==0 ) )
+	return f
+
+
+def _render_model_fields(m):
+	"""
+	Given a model, injects a rendered property on some of 
+	its fields.
+	"""
+	m.fields = map(_render_field, m.fields)
+	return m 	
+
+
 class DjangoGenerator():
-	#
+
 	class JinjaGenerator():
 		def __init__(self):
 			self.PATH = os.path.dirname(os.path.abspath(__file__))
@@ -60,12 +86,21 @@ class DjangoGenerator():
 		return '%s/%s' % (self.base_path, 
 											self.prj_name)
 	#
+	
+	#
 	#
 	def _render_models(self):
 		"""
 		Given the current models definition,
-		returns a rendered string of models.py
+		returns a rendered string of models.py.
+		Because there is quite a bit of logic on
+		how to convert these into a django model,
+		I expect this function to grow and
+		become a class on its own...
 		"""
+		# Related fields are complex, we do the logic here
+		# and on the template we only print the generated string
+		self.models = map(_render_model_fields, self.models)
 		context = {
 			'models': self.models
 		}

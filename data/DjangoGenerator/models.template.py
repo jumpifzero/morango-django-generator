@@ -2,8 +2,10 @@
 {% macro field(f) -%}
 {%- if f.type == 'Boolean' -%}
 models.BooleanField()
-{%- elif f.type == 'String' or f.type == 'Text' %}
-models.CharField(max_length=30)
+{%- elif f.type == 'String' %}
+models.CharField(max_length=1024)
+{%- elif f.type == 'Text' %}
+models.TextField()
 {%- elif f.type == 'Integer' %}
 models.IntegerField()
 {%- elif f.type == 'Decimal' or f.type == 'Float' %}
@@ -18,7 +20,7 @@ models.DateField()
 {%- elif f.type == 'Email' %}
 models.EmailField()
 {%- elif f.relationship %}
-models.ManyToManyField('{{f.type}}', blank={{f.multiplicity.min==0}})
+{{f.rendered}}
 {%- else %}
 Bug in the generator. Unsupported field type!
 {%- endif %}
