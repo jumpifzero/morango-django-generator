@@ -34,7 +34,7 @@ def _render_model_fields(m):
 	Given a model, injects a rendered property on some of 
 	its fields.
 	"""
-	m.fields = map(_render_field, m.fields)
+	m.fields = list(map(_render_field, m.fields))
 	return m 	
 
 
@@ -100,7 +100,7 @@ class DjangoGenerator():
 		"""
 		# Related fields are complex, we do the logic here
 		# and on the template we only print the generated string
-		self.models = map(_render_model_fields, self.models)
+		self.models = list(map(_render_model_fields, self.models))
 		context = {
 			'models': self.models
 		}
@@ -118,6 +118,7 @@ class DjangoGenerator():
 	def generate_admin(self):
 		app_path = self.get_app_path()
 		fname = app_path + "/admin.py"
+		assert (len(self.models) > 0)
 		context = {
 			'models': self.models
 		}
