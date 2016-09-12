@@ -1,0 +1,14 @@
+{% extends "webapp/tag_base.html" %}
+
+{% block title %}
+    {{ tag }}
+{% endblock %}
+
+{% block content %}
+    <h1><a href={% url "tag_list" %}>Tag</a></h1>
+    <h2>{{ tag }} | <a href={% url "tag_update" tag.pk %}>Update</a> | 
+    <form style="display:inline;" action={% url "tag_delete" tag.pk %} method="post" onsubmit="return confirm('Are you sure you want to delete {{ tag }}?')">{% csrf_token %}
+    <input type="submit" value="Delete" />
+    </form>
+    </h2>
+{% endblock %}

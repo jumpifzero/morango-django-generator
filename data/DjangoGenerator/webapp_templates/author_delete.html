@@ -1,0 +1,17 @@
+{% extends "webapp/author_base.html" %}
+
+{% block title %}
+    Delete {{ author }}
+{% endblock %}
+
+{% block content %}
+<h1>Delete {{ author }}</h1>
+
+<form action="" method="post">{% csrf_token %}
+    <p>Are you sure you want to delete {{ author }}?</p>
+    <input type="submit" value="Confirm" />
+</form>
+
+<a href={% url "author_detail" author.pk %}>Cancel</a>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "webapp/author_base.html" %}
+
+{% block title %}
+    Create Author
+{% endblock %}
+
+{% block content %}
+<h1><a href={% url "author_list" %}>Author</a></h1>
+<h2>Create Author</h2>
+
+<form action="" method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Create" />
+</form>
+<a href={% url "author_list" %}>Cancel</a>
+{% endblock %}

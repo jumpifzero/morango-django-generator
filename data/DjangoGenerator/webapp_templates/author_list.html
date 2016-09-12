@@ -1,0 +1,19 @@
+{% extends "webapp/author_base.html" %}
+
+{% block title %}
+    Authors
+{% endblock %}
+
+{% block content %}
+    <h1>Authors</h1>
+    <h2><a href={% url "author_create" %}>Create new Author</h2>
+    <ul>
+    {% for author in author_list %}
+        <li><a href={% url "author_detail" author.pk %}>{{ author }}</a> | <a href={% url "author_update" author.pk %}>Update</a> | <form style="display:inline;" action={% url "author_delete" author.pk %} method="post" onsubmit="return confirm('Are you sure you want to delete {{ author }}?')">{% csrf_token %}
+    <input type="submit" value="Delete" />
+    </form></li>
+    {% empty %}
+        <li>No Authors yet.</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

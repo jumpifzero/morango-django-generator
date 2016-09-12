@@ -1,0 +1,14 @@
+{% extends "webapp/post_base.html" %}
+
+{% block title %}
+    {{ post }}
+{% endblock %}
+
+{% block content %}
+    <h1><a href={% url "post_list" %}>Post</a></h1>
+    <h2>{{ post }} | <a href={% url "post_update" post.pk %}>Update</a> | 
+    <form style="display:inline;" action={% url "post_delete" post.pk %} method="post" onsubmit="return confirm('Are you sure you want to delete {{ post }}?')">{% csrf_token %}
+    <input type="submit" value="Delete" />
+    </form>
+    </h2>
+{% endblock %}

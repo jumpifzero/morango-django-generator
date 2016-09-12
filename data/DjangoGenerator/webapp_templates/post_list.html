@@ -1,0 +1,19 @@
+{% extends "webapp/post_base.html" %}
+
+{% block title %}
+    Posts
+{% endblock %}
+
+{% block content %}
+    <h1>Posts</h1>
+    <h2><a href={% url "post_create" %}>Create new Post</h2>
+    <ul>
+    {% for post in post_list %}
+        <li><a href={% url "post_detail" post.pk %}>{{ post }}</a> | <a href={% url "post_update" post.pk %}>Update</a> | <form style="display:inline;" action={% url "post_delete" post.pk %} method="post" onsubmit="return confirm('Are you sure you want to delete {{ post }}?')">{% csrf_token %}
+    <input type="submit" value="Delete" />
+    </form></li>
+    {% empty %}
+        <li>No Posts yet.</li>
+    {% endfor %}
+    </ul>
+{% endblock %}
