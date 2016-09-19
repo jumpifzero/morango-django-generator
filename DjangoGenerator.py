@@ -68,11 +68,17 @@ class DjangoGenerator():
 		self.app_name = 'webapp'
 		self.prj_name = ''.join(
 			random.choice(string.ascii_lowercase) for _ in range(6))
+		self.prj_env_name= self.prj_name + '-env'
 		self.base_path = os.getcwd()
 		self.models = models
 		self.text = {'generated_proj':'Generated project %s.'}
 		self.generator = DjangoGenerator.JinjaGenerator()
 		self.admin_email = 'a@b.com' #TODO (must come from outside)
+		# Full list of dependencies that need to be installed
+		self.dependencies = [ 
+			'django',
+			'git+https://github.com/jumpifzero/django-baker.git' 
+		]
 	#
 	#
 	def get_app_path(self):
@@ -154,7 +160,19 @@ class DjangoGenerator():
 		u.save()
 	#
 	def go(self):
-		# TODO: hacky code to fix later
+		# TODO: somewhat hacky code to fix later
+		# TODO: Join paths better!
+		# Create a virtualenv
+		os.system('virtualenv %s' % self.prj_env_name )
+		# Switch to it
+		activate_this = os.path.join(self.prj_env_name,
+			'bin', 'activate_this.py')
+		with open(activate_this, 'r') as f:
+			exec(f.read(), dict(__file__=activate_this))
+		# Install all dependencies
+		for dep in self.dependencies:
+			os.system('pip install %s' % dep)
+		# 
 		os.system('django-admin startproject %s' % self.prj_name)
 		os.chdir(self.prj_name)
 		os.system('django-admin startapp %s' % self.app_name)
@@ -169,5 +187,9 @@ class DjangoGenerator():
 							(self.admin_email))
 		print(self.text['generated_proj'] % self.prj_name)
 		self.set_admin_password()
-		os.chdir(self.prj_name)	
+		# Generate templates with django_baker
+		os.system('python3 manage.py bake webapp')
+		# Write base.html file	
+		# TODO
+		os.chdir(self.prj_name)
 		print(self.text['generated_proj'] % self.prj_name)
