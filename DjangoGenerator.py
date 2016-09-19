@@ -76,9 +76,10 @@ class DjangoGenerator():
 		self.admin_email = 'a@b.com' #TODO (must come from outside)
 		# Full list of dependencies that need to be installed
 		self.dependencies = [ 
-			'django',
+			'django==1.10',
 			'git+https://github.com/jumpifzero/django-baker.git' 
 		]
+		self.offline = True
 	#
 	#
 	def get_app_path(self):
@@ -143,6 +144,19 @@ class DjangoGenerator():
 		with open(fname, 'w') as f:
 			f.write(code)
 	#
+	def generate_toplevel_urls(self):
+		"""
+		Writes the toplevel urls mapping file
+		"""
+		context = {
+			'project_name': self.prj_name
+		}
+		code = self.generator.render('urls.template.py', context)
+		proj_path = self.get_proj_path()
+		fname = proj_path + "/%s/urls.py" % self.prj_name
+		with open(fname, 'w') as f:
+			f.write(code)
+	#
 	def set_admin_password(self):
 		import os
 		import sys
@@ -171,7 +185,12 @@ class DjangoGenerator():
 			exec(f.read(), dict(__file__=activate_this))
 		# Install all dependencies
 		for dep in self.dependencies:
-			os.system('pip install %s' % dep)
+			if self.offline:
+				os.system(
+					'pip install --no-index --find-links=file:/$HOME/.mypypi %s'
+					 % dep)
+			else:
+				os.system('pip install %s' % dep)
 		# 
 		os.system('django-admin startproject %s' % self.prj_name)
 		os.chdir(self.prj_name)
@@ -189,6 +208,7 @@ class DjangoGenerator():
 		self.set_admin_password()
 		# Generate templates with django_baker
 		os.system('python3 manage.py bake webapp')
+		self.generate_toplevel_urls()
 		# Write base.html file	
 		# TODO
 		os.chdir(self.prj_name)
