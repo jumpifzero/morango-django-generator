@@ -11,6 +11,7 @@ import random
 import string
 from jinja2 import Environment, FileSystemLoader
 from subprocess import Popen, PIPE, STDOUT
+import exceptions
 
 
 def _render_field(f):
@@ -65,6 +66,7 @@ class DjangoGenerator():
 			- a jinja2 generator 
 			- project base path
 		"""
+		self.current_file_dir = os.path.dirname(os.path.realpath(__file__))
 		self.app_name = 'webapp'
 		self.prj_name = ''.join(
 			random.choice(string.ascii_lowercase) for _ in range(6))
@@ -80,22 +82,18 @@ class DjangoGenerator():
 			'git+https://github.com/jumpifzero/django-baker.git' 
 		]
 		self.offline = True
-	#
-	#
+		#TODO: check if this exists
+		self.python = 'python3'	# python interpreter 
+
 	def get_app_path(self):
-		# TODO: join paths better
-		return '%s/%s/%s' % (self.base_path, 
-													self.prj_name, 
-													self.app_name)
-	#
+		return os.path.join(self.base_path, 
+			self.prj_name, 
+			self.app_name)
+
 	def get_proj_path(self):
-		# TODO: join paths better
-		return '%s/%s' % (self.base_path, 
-											self.prj_name)
-	#
-	
-	#
-	#
+		return os.path.join(self.base_path, 
+			self.prj_name)
+
 	def _render_models(self):
 		"""
 		Given the current models definition,
@@ -112,16 +110,13 @@ class DjangoGenerator():
 			'models': self.models
 		}
 		return self.generator.render('models.template.py', context)
-	#
-	#
+
 	def generate_models(self):
-		# TODO: join paths better
-		fname = self.get_app_path() + "/models.py" 
+		fname = os.path.join(self.get_app_path(), '/models.py') 
 		code = self._render_models()
 		with open(fname, 'w') as f:
 			f.write(code)
 	
-	#
 	def generate_admin(self):
 		app_path = self.get_app_path()
 		fname = app_path + "/admin.py"
@@ -133,7 +128,7 @@ class DjangoGenerator():
 		with open(fname, 'w') as f:
 			code = self.generator.render('admin.template.py', context)
 			f.write(code)
-	#
+
 	def generate_settings(self):
 		context = {
 			'project_name': self.prj_name
@@ -143,7 +138,7 @@ class DjangoGenerator():
 		fname = proj_path + "/%s/settings.py" % self.prj_name
 		with open(fname, 'w') as f:
 			f.write(code)
-	#
+	
 	def generate_toplevel_urls(self):
 		"""
 		Writes the toplevel urls mapping file
@@ -156,26 +151,48 @@ class DjangoGenerator():
 		fname = proj_path + "/%s/urls.py" % self.prj_name
 		with open(fname, 'w') as f:
 			f.write(code)
-	#
+	
 	def set_admin_password(self):
 		import os
 		import sys
 		import django
-
 		sys.path.append("./") #path to your settings file  
 		os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % self.prj_name
-		print(os.environ['DJANGO_SETTINGS_MODULE'])
-		print(sys.path)
-		print(os.getcwd())
 		django.setup()
 		from django.contrib.auth.models import User
 		u = User.objects.get(username__exact='admin')
 		u.set_password('1234')
 		u.save()
-	#
-	def go(self):
-		# TODO: somewhat hacky code to fix later
-		# TODO: Join paths better!
+	
+	def abort_on_cmd_error(self, error_code):
+		"""
+		Raises an exception when error_code is non zero
+		"""
+		if error_code != 0:
+			raise exceptions.CommandFailed()
+	
+	
+	def startproject(self):
+		"""
+		Runs django-admin startproject
+		"""
+		e = os.system('django-admin startproject %s' % self.prj_name)
+		self.abort_on_cmd_error(e)
+	
+	
+	def startapp(self):
+		"""
+		Runs django-admin startapp
+		"""
+		os.chdir(self.prj_name)
+		os.system('django-admin startapp %s' % self.app_name)
+	
+	
+	def create_virtualenv(self):
+		"""
+		Creates a virtualenv called <projectname>-env
+		and switches the current environment to it.
+		"""
 		# Create a virtualenv
 		os.system('virtualenv %s' % self.prj_env_name )
 		# Switch to it
@@ -183,7 +200,10 @@ class DjangoGenerator():
 			'bin', 'activate_this.py')
 		with open(activate_this, 'r') as f:
 			exec(f.read(), dict(__file__=activate_this))
-		# Install all dependencies
+
+	
+	def install_dependencies(self):
+		" pip installs all needed dependencies "
 		for dep in self.dependencies:
 			if self.offline:
 				os.system(
@@ -191,25 +211,32 @@ class DjangoGenerator():
 					 % dep)
 			else:
 				os.system('pip install %s' % dep)
-		# 
-		os.system('django-admin startproject %s' % self.prj_name)
-		os.chdir(self.prj_name)
-		os.system('django-admin startapp %s' % self.app_name)
+
+	
+	def go(self):
+		self.create_virtualenv()
+		self.install_dependencies()
+		self.startproject()
+		self.startapp()
 		self.generate_models()
 		self.generate_admin()
 		self.generate_settings()
-		# TODO: python3
-		os.system('python3 manage.py makemigrations')
-		os.system('python3 manage.py migrate')
-		os.system('python3 manage.py createsuperuser \
+		os.system('%s manage.py makemigrations' % self.python)
+		os.system('%s manage.py migrate' % self.python)
+		os.system('%s manage.py createsuperuser \
 								--noinput --username admin --email %s' %
-							(self.admin_email))
-		print(self.text['generated_proj'] % self.prj_name)
+							(self.python, self.admin_email))
 		self.set_admin_password()
 		# Generate templates with django_baker
-		os.system('python3 manage.py bake webapp')
+		os.system('%s manage.py bake webapp')
 		self.generate_toplevel_urls()
 		# Write base.html file	
-		# TODO
+		bhtml_path = os.path.join(self.current_file_dir,
+			'data/DjangoGenerator',
+			'webapp_templates/base.html')
+		bhtml_dest = os.path.join(self.current_file_dir, 
+			self.proj_path, 
+			'webapp/templates/webapp')
+		shutil.copy(bhtml_path, bhtml_dest)
 		os.chdir(self.prj_name)
 		print(self.text['generated_proj'] % self.prj_name)
