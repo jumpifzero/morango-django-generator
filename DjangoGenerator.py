@@ -3,11 +3,11 @@
 #
 # (C) Tiago Almeida 2016
 #
-# Still in early development stages.
 #
 # ============================================================
 import os
 import random
+import shutil
 import string
 from jinja2 import Environment, FileSystemLoader
 from subprocess import Popen, PIPE, STDOUT
@@ -112,7 +112,7 @@ class DjangoGenerator():
 		return self.generator.render('models.template.py', context)
 
 	def generate_models(self):
-		fname = os.path.join(self.get_app_path(), '/models.py') 
+		fname = os.path.join(self.get_app_path(), 'models.py')
 		code = self._render_models()
 		with open(fname, 'w') as f:
 			f.write(code)
@@ -130,6 +130,9 @@ class DjangoGenerator():
 			f.write(code)
 
 	def generate_settings(self):
+		"""
+		Writes the toplevel settings.py file
+		"""
 		context = {
 			'project_name': self.prj_name
 		}
@@ -143,12 +146,11 @@ class DjangoGenerator():
 		"""
 		Writes the toplevel urls mapping file
 		"""
-		context = {
-			'project_name': self.prj_name
-		}
+		context = { 'project_name': self.prj_name }
 		code = self.generator.render('urls.template.py', context)
-		proj_path = self.get_proj_path()
-		fname = proj_path + "/%s/urls.py" % self.prj_name
+		#proj_path = self.get_proj_path()
+		#fname = proj_path + "/%s/urls.py" % self.prj_name
+		fname = os.path.join(self.get_proj_path(), 'urls.py')
 		with open(fname, 'w') as f:
 			f.write(code)
 	
@@ -212,7 +214,18 @@ class DjangoGenerator():
 			else:
 				os.system('pip install %s' % dep)
 
-	
+	def generate_basehtml(self):
+		""" 
+		Write base.html file to project folder
+		"""	
+		bhtml_path = os.path.join(self.current_file_dir,
+			'data/DjangoGenerator/webapp_templates/base.html')
+		bhtml_dest = os.path.join( 
+			self.get_app_path(), 'templates', self.app_name)
+		os.makedirs(bhtml_dest,exist_ok=True)
+		bhtml_dest = os.path.join(bhtml_dest, 'base.html')
+		shutil.copy(bhtml_path, bhtml_dest)
+
 	def go(self):
 		self.create_virtualenv()
 		self.install_dependencies()
@@ -228,15 +241,8 @@ class DjangoGenerator():
 							(self.python, self.admin_email))
 		self.set_admin_password()
 		# Generate templates with django_baker
-		os.system('%s manage.py bake webapp')
+		os.system('%s manage.py bake webapp' % self.python)
 		self.generate_toplevel_urls()
-		# Write base.html file	
-		bhtml_path = os.path.join(self.current_file_dir,
-			'data/DjangoGenerator',
-			'webapp_templates/base.html')
-		bhtml_dest = os.path.join(self.current_file_dir, 
-			self.proj_path, 
-			'webapp/templates/webapp')
-		shutil.copy(bhtml_path, bhtml_dest)
+		self.generate_basehtml()
 		os.chdir(self.prj_name)
 		print(self.text['generated_proj'] % self.prj_name)
