@@ -85,15 +85,18 @@ class DjangoGenerator():
 		#TODO: check if this exists
 		self.python = 'python3'	# python interpreter 
 
+	
 	def get_app_path(self):
 		return os.path.join(self.base_path, 
 			self.prj_name, 
 			self.app_name)
 
+	
 	def get_proj_path(self):
 		return os.path.join(self.base_path, 
 			self.prj_name)
 
+	
 	def _render_models(self):
 		"""
 		Given the current models definition,
@@ -111,11 +114,13 @@ class DjangoGenerator():
 		}
 		return self.generator.render('models.template.py', context)
 
+	
 	def generate_models(self):
 		fname = os.path.join(self.get_app_path(), 'models.py')
 		code = self._render_models()
 		with open(fname, 'w') as f:
 			f.write(code)
+	
 	
 	def generate_admin(self):
 		app_path = self.get_app_path()
@@ -129,6 +134,7 @@ class DjangoGenerator():
 			code = self.generator.render('admin.template.py', context)
 			f.write(code)
 
+	
 	def generate_settings(self):
 		"""
 		Writes the toplevel settings.py file
@@ -142,6 +148,7 @@ class DjangoGenerator():
 		with open(fname, 'w') as f:
 			f.write(code)
 	
+	
 	def generate_toplevel_urls(self):
 		"""
 		Writes the toplevel urls mapping file
@@ -150,9 +157,11 @@ class DjangoGenerator():
 		code = self.generator.render('urls.template.py', context)
 		#proj_path = self.get_proj_path()
 		#fname = proj_path + "/%s/urls.py" % self.prj_name
-		fname = os.path.join(self.get_proj_path(), 'urls.py')
+		fname = os.path.join(self.get_proj_path(), 
+			self.prj_name, 'urls.py')
 		with open(fname, 'w') as f:
 			f.write(code)
+	
 	
 	def set_admin_password(self):
 		import os
@@ -221,7 +230,7 @@ class DjangoGenerator():
 		bhtml_path = os.path.join(self.current_file_dir,
 			'data/DjangoGenerator/webapp_templates/base.html')
 		bhtml_dest = os.path.join( 
-			self.get_app_path(), 'templates', self.app_name)
+			self.get_app_path(), 'templates')
 		os.makedirs(bhtml_dest,exist_ok=True)
 		bhtml_dest = os.path.join(bhtml_dest, 'base.html')
 		shutil.copy(bhtml_path, bhtml_dest)
